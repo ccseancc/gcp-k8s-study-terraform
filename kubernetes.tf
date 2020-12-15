@@ -34,9 +34,21 @@ module "node1" {
   scopes = ["compute-rw","storage-rw","service-management","service-control","logging-write","monitoring"]
 }
 
+module "node2" {
+  source        = "./modules/instance-external"
+  instance_name = "node2"
+  instance_machine_type = "e2-standard-2"
+  instance_zone = "${var.region}-a"
+  instance_image = "ubuntu-1804-bionic-v20201201"
+  subnet_name = "k8s-vpc"
+  tags = ["k8snode"]
+  startup_script = ""
+  scopes = ["compute-rw","storage-rw","service-management","service-control","logging-write","monitoring"]
+}
+
 module "k8s-ip" {
   source        = "./modules/reserveip"
-  name = "k8s-ip" 
+  name = "k8s-ip"
 }
 
 module "k8s-vpc" {
