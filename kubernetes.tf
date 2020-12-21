@@ -34,18 +34,6 @@ module "node1" {
   scopes = ["compute-rw","storage-rw","service-management","service-control","logging-write","monitoring"]
 }
 
-module "node2" {
-  source        = "./modules/instance-external"
-  instance_name = "node2"
-  instance_machine_type = "e2-standard-2"
-  instance_zone = "${var.region}-a"
-  instance_image = "ubuntu-1804-bionic-v20201201"
-  subnet_name = "k8s-vpc"
-  tags = ["k8snode"]
-  startup_script = ""
-  scopes = ["compute-rw","storage-rw","service-management","service-control","logging-write","monitoring"]
-}
-
 module "k8s-ip" {
   source        = "./modules/reserveip"
   name = "k8s-ip"
@@ -104,22 +92,25 @@ module "k8s-allow-healthcheck" {
 
 ## Below resources are Load Balancer related
 
-resource "google_compute_http_health_check" "k8s-healtcheck2" {
-  name        = "k8s-healtcheck2"
+resource "google_compute_http_health_check" "k8s-healtcheck" {
+  name        = "k8s-healtcheck"
   description = "K8s Health Check"
+  host = "kubernetes.default.svc.cluster.local"
   request_path = "/health_check"
 }
 
-/*
 resource "google_compute_target_pool" "default" {
-  name = "k8s-target-pool2"
-
-  instances = [
-    "asia-east2-a/control0",
-  ]
-
+  name = "k8s-target-pool"
+  instances = [ "${var.region}-a/control0",]
   health_checks = [
-    google_compute_health_check.k8s-healtcheck2.name,
+    google_compute_http_health_check.k8s-healtcheck.name,
   ]
 }
-*/
+
+resource "google_compute_forwarding_rule" "default" {
+  name       = "k8s-forwarding-rule"
+  target     = google_compute_target_pool.default.id
+  port_range = "6443"
+  ip_address = module.k8s-ip.ipaddress
+  region = var.region
+}
