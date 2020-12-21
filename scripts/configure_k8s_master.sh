@@ -10,7 +10,8 @@ sudo kubeadm init --control-plane-endpoint $control_endpoint --upload-certs --po
 mkdir -p $HOME/.kube
 rm -rf $HOME/.kube/*
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-sudo chown $(id -u):$(id -g) $HOME/.kube/config
+user=`basename $HOME`
+sudo chown $user:$user $HOME/.kube/config
 
 ## configure kubernetes for GCE
 cat << EOF | sudo tee /etc/kubernetes/cloud-config
